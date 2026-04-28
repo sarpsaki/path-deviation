@@ -1,142 +1,175 @@
-
-from pydantic import Field, validator
-from typing import List, Optional, Union, Literal
-from sdks.novavision.src.base.model import Package, Image, Inputs, Configs, Outputs, Response, Request, Output, Input, Config
-
-
-class InputImage(Input):
-    name: Literal["inputImage"] = "inputImage"
-    value: Union[List[Image], Image]
-    type: str = "object"
-
-    @validator("type", pre=True, always=True)
-    def set_type_based_on_value(cls, value, values):
-        value = values.get('value')
-        if isinstance(value, Image):
-            return "object"
-        elif isinstance(value, list):
-            return "list"
-
-    class Config:
-        title = "Image"
+from pydantic import Field
+from typing import Any, Optional, Union, Literal
+from sdks.novavision.src.base.model import (
+    Package, Image, Inputs, Configs, Outputs, Response, Request,
+    Output, Input, Config
+)
 
 
-class OutputImage(Output):
-    name: Literal["outputImage"] = "outputImage"
-    value: Union[List[Image],Image]
-    type: str = "object"
-
-    @validator("type", pre=True, always=True)
-    def set_type_based_on_value(cls, value, values):
-        value = values.get('value')
-        if isinstance(value, Image):
-            return "object"
-        elif isinstance(value, list):
-            return "list"
-
-    class Config:
-        title = "Image"
-
-
-class KeepSideFalse(Config):
-    name: Literal["False"] = "False"
-    value: Literal[False] = False
-    type: Literal["bool"] = "bool"
+class AnchorCenter(Config):
+    name: Literal["CENTER"] = "CENTER"
+    value: Literal["CENTER"] = "CENTER"
+    type: Literal["string"] = "string"
     field: Literal["option"] = "option"
 
     class Config:
-        title = "Disable"
+        title = "Center"
+        json_schema_extra = {"shortDescription": "Bounding box merkez noktası"}
 
 
-class KeepSideTrue(Config):
-    name: Literal["True"] = "True"
-    value: Literal[True] = True
-    type: Literal["bool"] = "bool"
+class AnchorBottomCenter(Config):
+    name: Literal["BOTTOM_CENTER"] = "BOTTOM_CENTER"
+    value: Literal["BOTTOM_CENTER"] = "BOTTOM_CENTER"
+    type: Literal["string"] = "string"
     field: Literal["option"] = "option"
 
     class Config:
-        title = "Enable"
+        title = "Bottom Center"
+        json_schema_extra = {"shortDescription": "Bounding box alt-merkez noktası"}
 
 
-class KeepSideBBox(Config):
-    """
-        Rotate image without catting off sides.
-    """
-    name: Literal["KeepSide"] = "KeepSide"
-    value: Union[KeepSideTrue, KeepSideFalse]
+class AnchorTopCenter(Config):
+    name: Literal["TOP_CENTER"] = "TOP_CENTER"
+    value: Literal["TOP_CENTER"] = "TOP_CENTER"
+    type: Literal["string"] = "string"
+    field: Literal["option"] = "option"
+
+    class Config:
+        title = "Top Center"
+        json_schema_extra = {"shortDescription": "Bounding box üst-merkez noktası"}
+
+
+class AnchorCenterLeft(Config):
+    name: Literal["CENTER_LEFT"] = "CENTER_LEFT"
+    value: Literal["CENTER_LEFT"] = "CENTER_LEFT"
+    type: Literal["string"] = "string"
+    field: Literal["option"] = "option"
+
+    class Config:
+        title = "Center Left"
+        json_schema_extra = {"shortDescription": "Bounding box sol-merkez noktası"}
+
+
+class AnchorCenterRight(Config):
+    name: Literal["CENTER_RIGHT"] = "CENTER_RIGHT"
+    value: Literal["CENTER_RIGHT"] = "CENTER_RIGHT"
+    type: Literal["string"] = "string"
+    field: Literal["option"] = "option"
+
+    class Config:
+        title = "Center Right"
+        json_schema_extra = {"shortDescription": "Bounding box sağ-merkez noktası"}
+
+
+class ConfigTriggeringAnchor(Config):
+    name: Literal["configTriggeringAnchor"] = "configTriggeringAnchor"
+    value: Union[
+        AnchorCenter,
+        AnchorBottomCenter,
+        AnchorTopCenter,
+        AnchorCenterLeft,
+        AnchorCenterRight,
+    ]
     type: Literal["object"] = "object"
     field: Literal["dropdownlist"] = "dropdownlist"
 
     class Config:
-        title = "Keep Sides"
+        title = "Triggering Anchor"
+        json_schema_extra = {"shortDescription": "Nesnenin yolunu hesaplamak için bounding box üzerindeki referans nokta."}
 
 
-class Degree(Config):
-    """
-        Positive angles specify counterclockwise rotation while negative angles indicate clockwise rotation.
-    """
-    name: Literal["Degree"] = "Degree"
-    value: int = Field(ge=-359.0, le=359.0,default=0)
-    type: Literal["number"] = "number"
+class ConfigReferencePath(Config):
+    name: Literal["configReferencePath"] = "configReferencePath"
+    value: str = Field(default="[[0,0],[100,100]]")
+    type: Literal["string"] = "string"
     field: Literal["textInput"] = "textInput"
-    placeHolder: Literal["[-359, 359]"] = "[-359, 359]"
 
     class Config:
-        title = "Angle"
+        title = "Reference Path (JSON)"
+        json_schema_extra = {"shortDescription": "Beklenen referans yol. En az 2 nokta içeren JSON dizisi. Örnek: [[100,200],[200,300],[300,400]]"}
 
 
-class PackageInputs(Inputs):
+class InputImage(Input):
+    name: Literal["inputImage"] = "inputImage"
+    value: Union[Image, Any]
+    type: Literal["object"] = "object"
+
+    class Config:
+        title = "Input Image"
+        json_schema_extra = {"shortDescription": "Video metadata'sı gömülü görüntü. Birden fazla video akışı için state ayrımı sağlar."}
+
+
+class InputDetections(Input):
+    name: Literal["inputDetections"] = "inputDetections"
+    value: Optional[Any] = None
+    type: Literal["list"] = "list"
+
+    class Config:
+        title = "Input Detections"
+        json_schema_extra = {"shortDescription": "Tracker bloğundan gelen, tracker_id bilgisi içeren nesne tespitleri."}
+
+
+class OutputDetections(Output):
+    name: Literal["outputDetections"] = "outputDetections"
+    value: Optional[Any] = None
+    type: Literal["list"] = "list"
+
+    class Config:
+        title = "Output Detections"
+        json_schema_extra = {"shortDescription": "Her tespit için referans yoldan sapma miktarını (Fréchet mesafesi, piksel) içeren güncellenmiş liste."}
+
+
+class PathDeviationInputs(Inputs):
     inputImage: InputImage
+    inputDetections: InputDetections
 
 
-class PackageConfigs(Configs):
-    degree: Degree
-    drawBBox: KeepSideBBox
+class PathDeviationConfigs(Configs):
+    configTriggeringAnchor: ConfigTriggeringAnchor
+    configReferencePath: ConfigReferencePath
 
 
-class PackageOutputs(Outputs):
-    outputImage: OutputImage
+class PathDeviationOutputs(Outputs):
+    outputDetections: OutputDetections
 
 
-class PackageRequest(Request):
-    inputs: Optional[PackageInputs]
-    configs: PackageConfigs
+class PathDeviationRequest(Request):
+    inputs: Optional[PathDeviationInputs] = None
+    configs: PathDeviationConfigs
 
     class Config:
-        json_schema_extra = {
-            "target": "configs"
-        }
+        json_schema_extra = {"target": "configs"}
 
 
-class PackageResponse(Response):
-    outputs: PackageOutputs
+class PathDeviationResponse(Response):
+    outputs: PathDeviationOutputs
 
 
-class PackageExecutor(Config):
-    name: Literal["Package"] = "Package"
-    value: Union[PackageRequest, PackageResponse]
+class PathDeviationExecutor(Config):
+    name: Literal["PathDeviation"] = "PathDeviation"
+    value: Union[PathDeviationRequest, PathDeviationResponse]
     type: Literal["object"] = "object"
     field: Literal["option"] = "option"
 
     class Config:
-        title = "Package"
+        title = "Path Deviation"
         json_schema_extra = {
-            "target": {
-                "value": 0
-            }
+            "shortDescription": "Takip edilen nesnelerin gerçek yolunu referans yolla karşılaştırarak Fréchet mesafesini hesaplar.",
+            "target": {"value": 0},
         }
 
 
 class ConfigExecutor(Config):
     name: Literal["ConfigExecutor"] = "ConfigExecutor"
-    value: Union[PackageExecutor]
+    value: Union[PathDeviationExecutor]
     type: Literal["executor"] = "executor"
     field: Literal["dependentDropdownlist"] = "dependentDropdownlist"
 
     class Config:
-        title = "Task"
+        title = "Algorithm"
         json_schema_extra = {
-            "target": "value"
+            "shortDescription": "Çalıştırılacak analitik algoritmayı seçin.",
+            "target": "value",
         }
 
 
@@ -146,5 +179,9 @@ class PackageConfigs(Configs):
 
 class PackageModel(Package):
     configs: PackageConfigs
-    type: Literal["component"] = "component"
-    name: Literal["Package"] = "Package"
+    type: Literal["capsule"] = "capsule"
+    name: Literal["PathDeviation"] = "PathDeviation"
+    uID: str = "7654321"
+
+    class Config:
+        json_schema_extra = {"shortDescription": "Takip edilen nesnelerin önceden tanımlanmış bir referans yoldan ne kadar saptığını Fréchet mesafesiyle ölçen kapsül."}

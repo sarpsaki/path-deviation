@@ -1,15 +1,21 @@
-
 from sdks.novavision.src.helper.package import PackageHelper
-from components.Package.src.models.PackageModel import PackageModel, PackageConfigs, ConfigExecutor, PackageOutputs, PackageResponse, PackageExecutor, OutputImage
+from capsules.PathDeviation.src.models.PackageModel import (
+    PackageModel,
+    PackageConfigs,
+    ConfigExecutor,
+    PathDeviationExecutor,
+    PathDeviationOutputs,
+    PathDeviationResponse,
+    OutputDetections,
+)
 
 
-def build_response(context):
-    outputImage = OutputImage(value=context.image)
-    Outputs = PackageOutputs(outputImage=outputImage)
-    packageResponse = PackageResponse(outputs=Outputs)
-    packageExecutor = PackageExecutor(value=packageResponse)
-    executor = ConfigExecutor(value=packageExecutor)
-    packageConfigs = PackageConfigs(executor=executor)
-    package = PackageHelper(packageModel=PackageModel, packageConfigs=packageConfigs)
-    packageModel = package.build_model(context)
-    return packageModel
+def build_response(context) -> dict:
+    outputDetections = OutputDetections(value=context.outputData)
+    outputs          = PathDeviationOutputs(outputDetections=outputDetections)
+    packageResponse  = PathDeviationResponse(outputs=outputs)
+    packageExecutor  = PathDeviationExecutor(value=packageResponse)
+    executor         = ConfigExecutor(value=packageExecutor)
+    packageConfigs   = PackageConfigs(executor=executor)
+    package          = PackageHelper(packageModel=PackageModel, packageConfigs=packageConfigs)
+    return package.build_model(context)

@@ -41,11 +41,29 @@ def frechet_distance(path_a: Path, path_b: Path) -> float:
     return _dp(n - 1, m - 1)
 
 
+def _flatten_detection(detection: dict) -> dict:
+    bbox = detection.get("boundingBox")
+    if bbox and isinstance(bbox, dict):
+        return {
+            "left":   bbox.get("left",   0),
+            "top":    bbox.get("top",    0),
+            "width":  bbox.get("width",  0),
+            "height": bbox.get("height", 0),
+        }
+    return {
+        "left":   detection.get("left",   detection.get("x", 0)),
+        "top":    detection.get("top",    detection.get("y", 0)),
+        "width":  detection.get("width",  0),
+        "height": detection.get("height", 0),
+    }
+
+
 def get_anchor_point(detection: dict, anchor: str = "CENTER") -> Point:
-    left   = detection.get("left",   detection.get("x", 0))
-    top    = detection.get("top",    detection.get("y", 0))
-    width  = detection.get("width",  0)
-    height = detection.get("height", 0)
+    flat   = _flatten_detection(detection)
+    left   = flat["left"]
+    top    = flat["top"]
+    width  = flat["width"]
+    height = flat["height"]
 
     cx = left + width  / 2.0
     cy = top  + height / 2.0

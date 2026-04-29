@@ -10,7 +10,6 @@ from capsules.PathDeviation.src.utils.response import build_response
 from capsules.PathDeviation.src.models.PackageModel import PackageModel
 from capsules.PathDeviation.src.utils.frechet import frechet_distance, get_anchor_point
 
-# { video_id: { tracker_id: [(x, y), ...] } }
 _PATH_STORE: dict = {}
 
 
@@ -50,6 +49,20 @@ class PathDeviation(Capsule):
             print(f"[PathDeviation] Referans yol parse hatası: {e}. Varsayılan kullanılıyor.")
             return [(0, 0), (100, 100)]
 
+    @staticmethod
+    def _get_tracker_id(det: dict) -> str | None:
+        tid = det.get("tracker_id") or det.get("trackerId")
+        if tid is not None:
+            return str(tid)
+        img_uid = det.get("imgUID")
+        if img_uid:
+            label   = det.get("classLabel", "obj")
+            bbox    = det.get("boundingBox", {})
+            left    = int(bbox.get("left", det.get("left", 0)))
+            top     = int(bbox.get("top",  det.get("top",  0)))
+            return f"{label}_{left}_{top}"
+        return None
+
     def _get_or_create_history(self, tracker_id: str) -> list:
         if self.video_id not in _PATH_STORE:
             _PATH_STORE[self.video_id] = {}
@@ -68,19 +81,19 @@ class PathDeviation(Capsule):
 
     def run(self):
         for det in self.detections:
-            tracker_id = det.get("tracker_id") or det.get("trackerId")
+            tracker_id = self._get_tracker_id(det)
+
+            enriched = dict(det)
 
             if tracker_id is None:
-                det["path_deviation"] = None
-                self.outputData.append(det)
+                enriched["path_deviation"] = None
+                self.outputData.append(enriched)
                 continue
 
-            tracker_id   = str(tracker_id)
             history      = self._get_or_create_history(tracker_id)
             anchor_point = get_anchor_point(det, self.anchor)
             history.append(anchor_point)
 
-            enriched = dict(det)
             enriched["path_deviation"] = round(self._compute_deviation(history), 4)
             self.outputData.append(enriched)
 

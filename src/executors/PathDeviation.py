@@ -99,6 +99,8 @@ class PathDeviation(Capsule):
             history      = self._get_or_create_history(tracker_id)
             anchor_point = get_anchor_point(det, self.anchor)
             history.append(anchor_point)
+            if len(history) > 60:
+                history.pop(0)
 
             enriched["path_deviation"] = round(self._compute_deviation(history), 4)
             self.outputData.append(enriched)

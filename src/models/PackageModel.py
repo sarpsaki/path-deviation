@@ -1,5 +1,5 @@
-from pydantic import Field
-from typing import Any, Optional, Union, Literal
+from pydantic import Field, validator
+from typing import List, Optional, Union, Literal
 from sdks.novavision.src.base.model import (
     Package, Image, Inputs, Configs, Outputs, Response, Request,
     Output, Input, Config
@@ -14,7 +14,6 @@ class AnchorCenter(Config):
 
     class Config:
         title = "Center"
-        json_schema_extra = {"shortDescription": "Bounding box merkez noktası"}
 
 
 class AnchorBottomCenter(Config):
@@ -25,7 +24,6 @@ class AnchorBottomCenter(Config):
 
     class Config:
         title = "Bottom Center"
-        json_schema_extra = {"shortDescription": "Bounding box alt-merkez noktası"}
 
 
 class AnchorTopCenter(Config):
@@ -36,7 +34,6 @@ class AnchorTopCenter(Config):
 
     class Config:
         title = "Top Center"
-        json_schema_extra = {"shortDescription": "Bounding box üst-merkez noktası"}
 
 
 class AnchorCenterLeft(Config):
@@ -47,7 +44,6 @@ class AnchorCenterLeft(Config):
 
     class Config:
         title = "Center Left"
-        json_schema_extra = {"shortDescription": "Bounding box sol-merkez noktası"}
 
 
 class AnchorCenterRight(Config):
@@ -58,11 +54,15 @@ class AnchorCenterRight(Config):
 
     class Config:
         title = "Center Right"
-        json_schema_extra = {"shortDescription": "Bounding box sağ-merkez noktası"}
 
 
 class ConfigTriggeringAnchor(Config):
-    name: Literal["configTriggeringAnchor"] = "configTriggeringAnchor"
+    """
+    Select the anchor point on the bounding box used to track object position across frames.
+    The selected point's coordinates are accumulated to build the trajectory that is compared
+    against the reference path using Fréchet distance. CENTER is suitable for most use cases.
+    """
+    name: Literal["ConfigTriggeringAnchor"] = "ConfigTriggeringAnchor"
     value: Union[
         AnchorCenter,
         AnchorBottomCenter,
@@ -79,44 +79,56 @@ class ConfigTriggeringAnchor(Config):
 
 
 class ConfigReferencePath(Config):
-    name: Literal["configReferencePath"] = "configReferencePath"
+    """
+    Define the expected reference path as a JSON array of at least 2 [x, y] coordinate pairs.
+    The Fréchet distance between each tracked object's trajectory and this path measures deviation.
+    Points must be ordered along the expected direction of travel.
+    Example: [[100,200],[200,300],[300,400]]
+    """
+    name: Literal["ConfigReferencePath"] = "ConfigReferencePath"
     value: str = Field(default="[[0,0],[100,100]]")
     type: Literal["string"] = "string"
     field: Literal["textInput"] = "textInput"
+    placeHolder: Literal["[[x1,y1],[x2,y2],...]"] = "[[x1,y1],[x2,y2],...]"
 
     class Config:
         title = "Reference Path (JSON)"
-        json_schema_extra = {"shortDescription": "Beklenen referans yol. En az 2 nokta içeren JSON dizisi. Örnek: [[100,200],[200,300],[300,400]]"}
+        json_schema_extra = {"shortDescription": "Beklenen referans yol. En az 2 nokta içeren JSON dizisi: [[100,200],[200,300]]"}
 
 
 class InputImage(Input):
     name: Literal["inputImage"] = "inputImage"
-    value: Union[Image, Any]
-    type: Literal["object"] = "object"
+    value: Union[List[Image], Image]
+    type: str = "object"
+
+    @validator("type", pre=True, always=True)
+    def set_type_based_on_value(cls, value, values):
+        value = values.get('value')
+        if isinstance(value, Image):
+            return "object"
+        elif isinstance(value, list):
+            return "list"
 
     class Config:
         title = "Input Image"
-        json_schema_extra = {"shortDescription": "Video metadata'sı gömülü görüntü. Birden fazla video akışı için state ayrımı sağlar."}
 
 
 class InputDetections(Input):
     name: Literal["inputDetections"] = "inputDetections"
-    value: Optional[Any] = None
+    value: Union[dict, list]
     type: Literal["list"] = "list"
 
     class Config:
         title = "Input Detections"
-        json_schema_extra = {"shortDescription": "Tracker bloğundan gelen, tracker_id bilgisi içeren nesne tespitleri."}
 
 
 class OutputDetections(Output):
     name: Literal["outputDetections"] = "outputDetections"
-    value: Optional[Any] = None
+    value: Union[dict, list]
     type: Literal["list"] = "list"
 
     class Config:
         title = "Output Detections"
-        json_schema_extra = {"shortDescription": "Her tespit için referans yoldan sapma miktarını (Fréchet mesafesi, piksel) içeren güncellenmiş liste."}
 
 
 class PathDeviationInputs(Inputs):
@@ -154,7 +166,6 @@ class PathDeviationExecutor(Config):
     class Config:
         title = "Path Deviation"
         json_schema_extra = {
-            "shortDescription": "Takip edilen nesnelerin gerçek yolunu referans yolla karşılaştırarak Fréchet mesafesini hesaplar.",
             "target": {"value": 0},
         }
 
@@ -182,6 +193,3 @@ class PackageModel(Package):
     type: Literal["capsule"] = "capsule"
     name: Literal["PathDeviation"] = "PathDeviation"
     uID: str = "7654321"
-
-    class Config:
-        json_schema_extra = {"shortDescription": "Takip edilen nesnelerin önceden tanımlanmış bir referans yoldan ne kadar saptığını Fréchet mesafesiyle ölçen kapsül."}

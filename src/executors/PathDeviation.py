@@ -26,9 +26,9 @@ class PathDeviation(Capsule):
         self.image          = self.request.get_param("inputImage")
         self.video_id       = self._extract_video_id(self.image)
         self.detections     = self.request.get_param("inputDetections") or []
-        self.anchor         = self.request.get_param("ConfigTriggeringAnchor") or "CENTER"
+        self.anchor         = self.request.get_param("configTriggeringAnchor") or "CENTER"
         self.reference_path = self._parse_reference_path(
-            self.request.get_param("ConfigReferencePath") or "[[0,0],[100,100]]"
+            self.request.get_param("configReferencePath") or "[[0,0],[100,100]]"
         )
 
         self.outputData = []

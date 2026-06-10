@@ -14,6 +14,7 @@ class AnchorCenter(Config):
 
     class Config:
         title = "Center"
+        json_schema_extra = {"shortDescription": "Bounding box merkez noktası"}
 
 
 class AnchorBottomCenter(Config):
@@ -24,6 +25,7 @@ class AnchorBottomCenter(Config):
 
     class Config:
         title = "Bottom Center"
+        json_schema_extra = {"shortDescription": "Bounding box alt-merkez noktası"}
 
 
 class AnchorTopCenter(Config):
@@ -34,6 +36,7 @@ class AnchorTopCenter(Config):
 
     class Config:
         title = "Top Center"
+        json_schema_extra = {"shortDescription": "Bounding box üst-merkez noktası"}
 
 
 class AnchorCenterLeft(Config):
@@ -44,6 +47,7 @@ class AnchorCenterLeft(Config):
 
     class Config:
         title = "Center Left"
+        json_schema_extra = {"shortDescription": "Bounding box sol-merkez noktası"}
 
 
 class AnchorCenterRight(Config):
@@ -54,15 +58,11 @@ class AnchorCenterRight(Config):
 
     class Config:
         title = "Center Right"
+        json_schema_extra = {"shortDescription": "Bounding box sağ-merkez noktası"}
 
 
 class ConfigTriggeringAnchor(Config):
-    """
-    Select the anchor point on the bounding box used to track object position across frames.
-    The selected point's coordinates are accumulated to build the trajectory that is compared
-    against the reference path using Fréchet distance. CENTER is suitable for most use cases.
-    """
-    name: Literal["ConfigTriggeringAnchor"] = "ConfigTriggeringAnchor"
+    name: Literal["configTriggeringAnchor"] = "configTriggeringAnchor"
     value: Union[
         AnchorCenter,
         AnchorBottomCenter,
@@ -79,13 +79,7 @@ class ConfigTriggeringAnchor(Config):
 
 
 class ConfigReferencePath(Config):
-    """
-    Define the expected reference path as a JSON array of at least 2 [x, y] coordinate pairs.
-    The Fréchet distance between each tracked object's trajectory and this path measures deviation.
-    Points must be ordered along the expected direction of travel.
-    Example: [[100,200],[200,300],[300,400]]
-    """
-    name: Literal["ConfigReferencePath"] = "ConfigReferencePath"
+    name: Literal["configReferencePath"] = "configReferencePath"
     value: str = Field(default="[[0,0],[100,100]]")
     type: Literal["string"] = "string"
     field: Literal["textInput"] = "textInput"
@@ -111,6 +105,7 @@ class InputImage(Input):
 
     class Config:
         title = "Input Image"
+        json_schema_extra = {"shortDescription": "Video metadata'sı gömülü görüntü"}
 
 
 class InputDetections(Input):
@@ -120,6 +115,7 @@ class InputDetections(Input):
 
     class Config:
         title = "Input Detections"
+        json_schema_extra = {"shortDescription": "Tracker bloğundan gelen nesne tespitleri"}
 
 
 class OutputDetections(Output):
@@ -129,6 +125,7 @@ class OutputDetections(Output):
 
     class Config:
         title = "Output Detections"
+        json_schema_extra = {"shortDescription": "path_deviation alanı eklenmiş tespit listesi"}
 
 
 class PathDeviationInputs(Inputs):
@@ -166,6 +163,7 @@ class PathDeviationExecutor(Config):
     class Config:
         title = "Path Deviation"
         json_schema_extra = {
+            "shortDescription": "Takip edilen nesnelerin gerçek yolunu referans yolla karşılaştırarak Fréchet mesafesini hesaplar.",
             "target": {"value": 0},
         }
 
